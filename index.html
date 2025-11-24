@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ticket App Final</title>
+    <title>Ticket App vFinal</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,7 +12,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Roboto', sans-serif; background: #f0f2f5; height: 100vh; overflow: hidden; }
 
-        /* --- COLOR CLASSES (Use !important to ensure they apply) --- */
+        /* --- COLORS --- */
         .bg-blue { background-color: #4285F4 !important; }
         .bg-green { background-color: #2e7d32 !important; }
         .bg-orange { background-color: #ff6d00 !important; }
@@ -23,11 +23,9 @@
             background: white; display: none; flex-direction: column;
             overflow-y: auto; z-index: 10;
         }
-        
-        /* Form visible first */
         #form-screen { display: flex; z-index: 20; padding: 20px; }
 
-        /* --- FORM ELEMENTS --- */
+        /* --- FORM --- */
         .input-group { margin-bottom: 15px; }
         label { display: block; color: #666; font-size: 12px; margin-bottom: 5px; font-weight: 500; }
         input, select {
@@ -41,7 +39,7 @@
             box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
         }
 
-        /* --- TICKET CARD --- */
+        /* --- TICKET --- */
         .header-nav {
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 20px; color: white; flex-shrink: 0;
@@ -71,32 +69,28 @@
             font-weight: 500; font-size: 14px; margin-top: 15px; cursor: pointer;
         }
 
-        /* LOGO FIX */
+        /* --- ONDC TEXT LOGO --- */
         .footer-logo-container {
             text-align: center; margin-top: 20px; 
             display: flex; justify-content: center; align-items: center;
-            padding: 10px;
+            padding: 10px; font-weight: 700; font-size: 16px; gap: 5px;
         }
-        /* Ensures the logo is visible and sized correctly */
-        .custom-logo-img { 
-            height: 40px; 
-            width: auto; 
-            object-fit: contain;
-            display: block;
-        }
+        .ondc-text-blue { color: #4285F4; }
+        .ondc-text-grey { color: #555555; }
         
         .txn-id { text-align: center; font-size: 11px; color: #999; margin-top: 10px; }
 
-        /* --- OTHER SCREENS --- */
+        /* --- QR SCREEN --- */
         .qr-center { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .qr-box {
             background: white; padding: 15px; border-radius: 4px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); aspect-ratio: 1/1;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            aspect-ratio: 1/1; /* ENSURES SQUARE */
             width: 90%; max-width: 360px; display: flex; justify-content: center; align-items: center;
         }
         #qrcode img { width: 100% !important; height: auto !important; }
 
-        /* Support & List Styles */
+        /* --- SUPPORT & LIST --- */
         .support-header { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee; gap: 20px; }
         .back-icon { font-size: 20px; color: #333; cursor: pointer; }
         .page-title { font-size: 18px; font-weight: 500; color: #000; }
@@ -137,9 +131,13 @@
             background: #27ae60; color: white; width: 100%; border: none;
             padding: 10px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer;
         }
+        
+        /* --- INVALID STAMP (DARK) --- */
         .invalid-stamp {
             position: absolute; top: 30px; left: 50%; transform: translateX(-50%) rotate(-10deg);
-            color: #c0392b; font-weight: 900; font-size: 32px; border: 4px solid #c0392b;
+            color: #000000; /* DARK COLOR */
+            font-weight: 900; font-size: 32px; 
+            border: 4px solid #000000; /* DARK BORDER */
             padding: 5px 10px; opacity: 0.8; pointer-events: none;
             letter-spacing: 2px; text-transform: uppercase; font-family: 'Courier New', Courier, monospace;
         }
@@ -151,7 +149,6 @@
     <div id="form-screen" class="app-screen">
         <h2>Create Ticket 🚌</h2>
         <div class="input-group"><label>Background Color</label>
-            <!-- Values are now Class Names, simpler for logic -->
             <select id="in-color">
                 <option value="bg-blue">Blue (Default)</option>
                 <option value="bg-green">Green</option>
@@ -169,7 +166,7 @@
         <button class="generate-btn" onclick="startApp()">Generate Ticket</button>
     </div>
 
-    <!-- SCREEN 2: TICKET (Start with bg-blue by default) -->
+    <!-- SCREEN 2: TICKET -->
     <div id="ticket-screen" class="app-screen bg-blue">
         <div class="header-nav">
             <i class="fa-solid fa-xmark" style="font-size: 20px; cursor:pointer;" onclick="location.reload()"></i>
@@ -200,15 +197,16 @@
                 <div class="txn-id">T11102025ee8d9034fe</div>
                 <div class="qr-btn" onclick="openQR()"><i class="fa-solid fa-qrcode"></i> Show QR code</div>
                 
-                <!-- ONDC LOGO FIX: Using public internet URL -->
+                <!-- ONDC TEXT LOGO -->
                 <div id="footer-logo-container" class="footer-logo-container">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/ONDC_Official_Logo.svg/1200px-ONDC_Official_Logo.svg.png" alt="ONDC" class="custom-logo-img">
+                    <span class="ondc-text-blue">ONDC</span>
+                    <span class="ondc-text-grey">NETWORK</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCREEN 3: QR CODE (Start with bg-blue) -->
+    <!-- SCREEN 3: QR CODE -->
     <div id="qr-screen" class="app-screen bg-blue">
         <div class="header-nav">
             <i class="fa-solid fa-xmark" style="font-size: 20px; cursor:pointer;" onclick="showScreen('ticket-screen')"></i>
@@ -230,8 +228,8 @@
         </div>
         <div class="support-content">
             <div class="section-title" style="margin:20px 0 10px; font-weight:700;">Personal Details</div>
-            <input type="text" class="support-input" value="Sahil Sehrawat">
-            <input type="text" class="support-input" value="7678590220">
+            <input type="text" class="support-input" value="Your Name">
+            <input type="text" class="support-input" value="Your Number">
             <input type="email" class="support-input" placeholder="Enter your e-mail">
             <div class="section-title" style="margin:20px 0 10px; font-weight:700;">Issue Details</div>
             <textarea class="support-textarea" placeholder="Description..."></textarea>
@@ -249,6 +247,7 @@
             <span class="page-title">All Bus Tickets</span>
         </div>
         <div class="ticket-list">
+            <!-- Valid Ticket -->
             <div class="list-card">
                 <div class="lc-header">
                     <div class="lc-route-badge"><i class="fa-solid fa-bus"></i> <span id="list-route">Route 844</span></div>
@@ -261,6 +260,7 @@
                 </div>
                 <button class="lc-view-btn" onclick="showScreen('ticket-screen')">View Ticket</button>
             </div>
+            <!-- Invalid Ticket -->
             <div class="list-card">
                 <div class="invalid-stamp">INVALID</div>
                 <div class="lc-header"><div class="lc-route-badge"><i class="fa-solid fa-bus"></i> Route 628STL</div><div class="lc-price">₹9.25</div></div>
@@ -283,30 +283,20 @@
         }
 
         function applyBgColor(className) {
-            // Target screens
             const screens = ['ticket-screen', 'qr-screen'];
-            
             screens.forEach(id => {
                 const el = document.getElementById(id);
-                // Remove all potential color classes
                 el.classList.remove('bg-blue', 'bg-green', 'bg-orange');
-                // Add the selected one
                 el.classList.add(className);
             });
         }
 
         function startApp() {
             try {
-                // 1. GET SELECTED CLASS (e.g., "bg-green")
-                currentBgClass = document.getElementById('in-color').value;
-                
-                // 2. SWITCH SCREEN FIRST (Immediate Feedback)
                 showScreen('ticket-screen');
-
-                // 3. APPLY COLOR LOGIC
+                currentBgClass = document.getElementById('in-color').value;
                 applyBgColor(currentBgClass);
 
-                // 4. GET DATA
                 const route = document.getElementById('in-route').value;
                 const vehicle = document.getElementById('in-vehicle').value;
                 const start = document.getElementById('in-start').value;
@@ -316,7 +306,6 @@
                 const time = document.getElementById('in-time').value;
                 const count = document.getElementById('in-count').value;
 
-                // 5. UPDATE UI
                 document.getElementById('out-route').innerText = route;
                 document.getElementById('out-vehicle').innerText = vehicle;
                 document.getElementById('out-start').innerText = start;
@@ -329,13 +318,11 @@
                 let topPrice = (parseFloat(fare) * 0.91).toFixed(2);
                 document.getElementById('out-top-price').innerText = topPrice;
 
-                // Update List
                 document.getElementById('list-route').innerText = "Route " + route;
                 document.getElementById('list-price').innerText = "₹" + topPrice;
                 document.getElementById('list-start').innerText = start;
                 document.getElementById('list-end').innerText = end;
 
-                // 6. QR DATA
                 ticketData = `Bus: ${route} | Vehicle: ${vehicle} | Date: ${date} ${time}`;
 
             } catch (e) {
@@ -347,7 +334,6 @@
             showScreen('qr-screen');
             const container = document.getElementById("qrcode");
             container.innerHTML = ""; 
-            
             if (typeof QRCode !== 'undefined') {
                 let size = Math.min(window.innerWidth * 0.8, 350);
                 new QRCode(container, {
@@ -360,7 +346,6 @@
             }
         }
         
-        // Screen Navigation helpers
         function closeQR() { showScreen('ticket-screen'); }
         function openSupport() { showScreen('support-screen'); }
         function closeSupport() { showScreen('ticket-screen'); }
@@ -370,5 +355,3 @@
     </script>
 </body>
 </html>
-
-

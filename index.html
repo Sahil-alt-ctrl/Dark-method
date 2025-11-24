@@ -16,6 +16,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Roboto', sans-serif; background: #f0f2f5; height: 100vh; overflow: hidden; }
 
+        /* --- COLORS --- */
+        .bg-blue { background-color: #4285F4; }
+        .bg-green { background-color: #2e7d32; }
+        .bg-orange { background-color: #ff6d00; }
+
         /* --- SCREEN MANAGEMENT --- */
         /* All screens absolute positioned. controlled via JS display property */
         .app-screen {
@@ -86,8 +91,11 @@
             font-weight: 500; font-size: 14px; margin-top: 15px; cursor: pointer;
         }
 
-        .footer-logo { text-align: center; margin-top: 20px; display: flex; justify-content: center; align-items: center; }
-        .ondc-img { height: 25px; width: auto; object-fit: contain; }
+        .footer-logo-container {
+            text-align: center; margin-top: 20px; display: flex; justify-content: center; align-items: center;
+            padding: 10px; border-radius: 8px;
+        }
+        .custom-logo-img { height: 40px; width: auto; object-fit: contain; }
         .txn-id { text-align: center; font-size: 11px; color: #999; margin-top: 10px; }
 
         /* QR Overlay */
@@ -155,9 +163,9 @@
         <h2>Create Ticket 🚌</h2>
         <div class="input-group"><label>Background Color</label>
             <select id="in-color">
-                <option value="#4285F4">Blue (Default)</option>
-                <option value="#2e7d32">Green</option>
-                <option value="#ff6d00">Orange</option>
+                <option value="bg-blue">Blue (Default)</option>
+                <option value="bg-green">Green</option>
+                <option value="bg-orange">Orange</option>
             </select>
         </div>
         <div class="input-group"><label>Bus Route</label><input type="text" id="in-route" value="844"></div>
@@ -168,8 +176,6 @@
         <div class="input-group"><label>Date</label><input type="text" id="in-date" value="11 Oct, 25"></div>
         <div class="input-group"><label>Time</label><input type="text" id="in-time" value="08:51 AM"></div>
         <div class="input-group"><label>Tickets</label><input type="number" id="in-count" value="1"></div>
-        
-        <!-- Button calls logic -->
         <button class="generate-btn" onclick="startApp()">Generate Ticket</button>
     </div>
 
@@ -204,8 +210,10 @@
                 <div class="txn-id">T11102025ee8d9034fe</div>
                 <div class="qr-btn" onclick="openQR()"><i class="fa-solid fa-qrcode"></i> Show QR code</div>
                 
-                <div class="footer-logo">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/58/ONDC_Official_Logo.svg" alt="ONDC NETWORK" class="ondc-img">
+                <!-- CUSTOM LOGO CONTAINER -->
+                <div id="footer-logo-container" class="footer-logo-container">
+                    <!-- Your uploaded image -->
+                    <img src="1000046735.png" alt="Custom Logo" class="custom-logo-img">
                 </div>
             </div>
         </div>
@@ -292,11 +300,11 @@
     <script>
         // GLOBAL VARIABLES
         let ticketData = "";
-        let currentBgColor = "#4285F4";
+        let currentColorClass = "bg-blue";
 
-        // === SCREEN SWITCHER (Fail-Safe) ===
+        // --- NAVIGATION ---
         function showScreen(screenId) {
-            // 1. Hide ALL screens
+            // 1. Hide ALL
             const screens = document.querySelectorAll('.app-screen');
             screens.forEach(s => s.style.display = 'none');
             
@@ -304,23 +312,32 @@
             const target = document.getElementById(screenId);
             if (target) {
                 target.style.display = 'flex';
-                // If showing Ticket or QR, ensure background color is correct
-                if (screenId === 'ticket-screen' || screenId === 'qr-screen') {
-                    target.style.backgroundColor = currentBgColor;
-                }
             } else {
                 alert("Critical Error: Screen '" + screenId + "' does not exist.");
             }
         }
 
-        // === START APP LOGIC ===
+        // --- APPLY COLORS ---
+        function applyColors(colorClass) {
+            // Apply to main screens
+            const screens = ['ticket-screen', 'qr-screen'];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('bg-blue', 'bg-green', 'bg-orange');
+                el.classList.add(colorClass);
+            });
+            
+            // Apply to logo container
+            const logoContainer = document.getElementById('footer-logo-container');
+            logoContainer.classList.remove('bg-blue', 'bg-green', 'bg-orange');
+            logoContainer.classList.add(colorClass);
+        }
+
+        // --- MAIN FUNCTION ---
         function startApp() {
             try {
-                // 1. SWITCH SCREEN FIRST (So you know it worked)
-                // We capture data momentarily
-                
-                // 2. GET DATA
-                currentBgColor = document.getElementById('in-color').value;
+                // 1. GET DATA & COLOR
+                currentColorClass = document.getElementById('in-color').value;
                 const route = document.getElementById('in-route').value;
                 const vehicle = document.getElementById('in-vehicle').value;
                 const start = document.getElementById('in-start').value;
@@ -329,6 +346,9 @@
                 const date = document.getElementById('in-date').value;
                 const time = document.getElementById('in-time').value;
                 const count = document.getElementById('in-count').value;
+
+                // 2. APPLY COLOR
+                applyColors(currentColorClass);
 
                 // 3. FILL TICKET
                 document.getElementById('out-route').innerText = route;
@@ -339,7 +359,7 @@
                 document.getElementById('out-date').innerText = date;
                 document.getElementById('out-time').innerText = time;
                 document.getElementById('out-count').innerText = count;
-
+                
                 let topPrice = (parseFloat(fare) * 0.91).toFixed(2);
                 document.getElementById('out-top-price').innerText = topPrice;
 
@@ -349,46 +369,7 @@
                 document.getElementById('list-start').innerText = start;
                 document.getElementById('list-end').innerText = end;
 
-                // 5. PREPARE QR DATA
+                // 5. SET QR DATA
                 ticketData = `Bus: ${route} | Vehicle: ${vehicle} | Date: ${date} ${time} | From: ${start} | To: ${end} | Paid: ${fare}`;
 
-                // 6. FINALLY SHOW TICKET
-                showScreen('ticket-screen');
-
-            } catch (error) {
-                alert("Error Generating Ticket: " + error.message);
-            }
-        }
-
-        // === QR CODE LOGIC ===
-        function openQR() {
-            showScreen('qr-screen');
-            const container = document.getElementById("qrcode");
-            container.innerHTML = ""; // Clear old QR
-            
-            // Check if Library loaded
-            if (typeof QRCode === 'undefined') {
-                container.innerHTML = "<p style='text-align:center'>Error: QR Library missing.<br>Check internet connection.</p>";
-                return;
-            }
-
-            try {
-                let size = Math.min(window.innerWidth * 0.8, 350);
-                new QRCode(container, {
-                    text: ticketData,
-                    width: size,
-                    height: size,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            } catch (e) {
-                alert("QR Generation Failed: " + e.message);
-            }
-        }
-
-    </script>
-</body>
-</html>
-
-
+                // 6. SWI

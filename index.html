@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ticket App vFinal</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Library (We will handle errors if this fails to load) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" onerror="console.log('QR Library failed to load')"></script>
+
+    <style>
+        /* --- RESET --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Roboto', sans-serif; background: #f0f2f5; height: 100vh; overflow: hidden; }
+
+        /* --- SCREEN MANAGEMENT --- */
+        /* All screens absolute positioned. controlled via JS display property */
+        .app-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: white;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        /* Form visible by default */
+        #form-screen { display: flex; z-index: 20; }
+
+        /* --- STYLING --- */
+        h2 { color: #333; margin-bottom: 20px; text-align: center; }
+        #form-screen { padding: 20px; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; color: #666; font-size: 12px; margin-bottom: 5px; font-weight: 500; }
+        input, select {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+            font-size: 16px; background: #f9f9f9;
+        }
+        input:focus, select:focus { border-color: #4285F4; outline: none; }
+
+        .generate-btn {
+            background: #4285F4; color: white; border: none; padding: 15px;
+            border-radius: 50px; font-size: 16px; font-weight: bold;
+            margin-top: 20px; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);
+        }
+
+        /* Header */
+        .header-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; color: white; flex-shrink: 0;
+        }
+        .warning-pill { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 400; cursor: pointer; }
+        .view-all-link { font-size: 14px; font-weight: 500; cursor: pointer; }
+        .warning-icon { color: #FFD700; font-size: 16px; }
+
+        /* Main Ticket Card */
+        .ticket-wrapper { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .ticket-card {
+            background: white; width: 100%; max-width: 350px; border-radius: 12px;
+            padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;
+        }
+        .org-name { text-align: center; font-weight: 700; font-size: 16px; margin-bottom: 15px; color: #000; }
+        
+        .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .col { display: flex; flex-direction: column; }
+        .col-right { text-align: right; }
+        .label { font-size: 12px; color: #555; margin-bottom: 2px; font-weight: 400; }
+        .value { font-size: 16px; font-weight: 400; color: #000; }
+        
+        .bus-route { font-size: 18px; font-weight: 400; }
+        .fare-bold { font-weight: 700 !important; }
+        
+        .divider { height: 1px; background: #e0e0e0; margin: 10px 0 15px 0; }
+        
+        .qr-btn {
+            background: #e6f4ea; border: 1px solid #1e8e3e; color: #1e8e3e;
+            width: 100%; padding: 12px; border-radius: 8px; display: flex;
+            justify-content: center; align-items: center; gap: 10px;
+            font-weight: 500; font-size: 14px; margin-top: 15px; cursor: pointer;
+        }
+
+        .footer-logo { text-align: center; margin-top: 20px; display: flex; justify-content: center; align-items: center; }
+        .ondc-img { height: 25px; width: auto; object-fit: contain; }
+        .txn-id { text-align: center; font-size: 11px; color: #999; margin-top: 10px; }
+
+        /* QR Overlay */
+        .qr-center { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .qr-box {
+            background: white; padding: 15px; border-radius: 4px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); aspect-ratio: 1/1;
+            width: 90%; max-width: 360px; display: flex; justify-content: center; align-items: center;
+        }
+        #qrcode img { width: 100% !important; height: auto !important; }
+
+        /* Support & List */
+        .support-header { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee; gap: 20px; }
+        .back-icon { font-size: 20px; color: #333; cursor: pointer; }
+        .page-title { font-size: 18px; font-weight: 500; color: #000; }
+        .support-content { padding: 20px; }
+        .support-input, .support-textarea {
+            width: 100%; padding: 15px; border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 15px; margin-bottom: 15px; background: white;
+        }
+        .support-textarea { height: 120px; resize: none; margin-bottom: 5px; }
+        .attach-box {
+            border: 2px dashed #ddd; border-radius: 8px; padding: 20px;
+            display: flex; justify-content: center; align-items: center;
+            color: #4285F4; gap: 10px; cursor: pointer; margin-bottom: 30px;
+        }
+        .submit-btn {
+            background: #1abc9c; color: white; border: none; width: 100%;
+            padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;
+        }
+        
+        #all-tickets-screen { background: #f5f5f5; }
+        .ticket-list { padding: 15px; }
+        .list-card {
+            background: white; border-radius: 12px; padding: 15px;
+            margin-bottom: 15px; border: 1px solid #eee; position: relative; overflow: hidden;
+        }
+        .lc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .lc-route-badge {
+            background: #e8f0fe; color: #1967d2; padding: 5px 10px; border-radius: 4px;
+            font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 8px;
+        }
+        .lc-price { font-size: 16px; font-weight: 700; }
+        .lc-stops { position: relative; margin-bottom: 15px; padding-left: 15px; }
+        .lc-stop-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .lc-stop-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; }
+        .dot-green { background: #2ecc71; }
+        .dot-red { background: #e74c3c; }
+        .lc-view-btn {
+            background: #27ae60; color: white; width: 100%; border: none;
+            padding: 10px; border-radius: 6px; font-weight: 500; font-size: 14px; cursor: pointer;
+        }
+        .invalid-stamp {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%) rotate(-10deg);
+            color: #c0392b; font-weight: 900; font-size: 32px; border: 4px solid #c0392b;
+            padding: 5px 10px; opacity: 0.8; pointer-events: none;
+            letter-spacing: 2px; text-transform: uppercase; font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: FORM -->
+    <div id="form-screen" class="app-screen">
+        <h2>Create Ticket 🚌</h2>
+        <div class="input-group"><label>Background Color</label>
+            <select id="in-color">
+                <option value="#4285F4">Blue (Default)</option>
+                <option value="#2e7d32">Green</option>
+                <option value="#ff6d00">Orange</option>
+            </select>
+        </div>
+        <div class="input-group"><label>Bus Route</label><input type="text" id="in-route" value="844"></div>
+        <div class="input-group"><label>Vehicle No.</label><input type="text" id="in-vehicle" value="DL1PD5819"></div>
+        <div class="input-group"><label>From</label><input type="text" id="in-start" value="Ujwa School"></div>
+        <div class="input-group"><label>To</label><input type="text" id="in-end" value="Nazafgarh Dhansa More"></div>
+        <div class="input-group"><label>Fare (₹)</label><input type="text" id="in-fare" value="25.0"></div>
+        <div class="input-group"><label>Date</label><input type="text" id="in-date" value="11 Oct, 25"></div>
+        <div class="input-group"><label>Time</label><input type="text" id="in-time" value="08:51 AM"></div>
+        <div class="input-group"><label>Tickets</label><input type="number" id="in-count" value="1"></div>
+        
+        <!-- Button calls logic -->
+        <button class="generate-btn" onclick="startApp()">Generate Ticket</button>
+    </div>
+
+    <!-- SCREEN 2: TICKET -->
+    <div id="ticket-screen" class="app-screen">
+        <div class="header-nav">
+            <i class="fa-solid fa-xmark" style="font-size: 20px; cursor:pointer;" onclick="location.reload()"></i>
+            <div class="warning-pill" onclick="showScreen('support-screen')">
+                <i class="fa-solid fa-triangle-exclamation warning-icon"></i>&nbsp;Issue with ticket?
+            </div>
+            <div class="view-all-link" onclick="showScreen('all-tickets-screen')">View all tickets</div>
+        </div>
+
+        <div class="ticket-wrapper">
+            <div class="ticket-card">
+                <div class="org-name">Transport Dept. of Delhi</div>
+                <div class="row" style="align-items: center; margin-bottom: 5px;">
+                    <div class="vehicle-no" id="out-vehicle">--</div>
+                    <div class="top-price">₹<span id="out-top-price">--</span></div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="col"><span class="label">Bus Route</span><span class="value bus-route" id="out-route">--</span></div>
+                    <div class="col col-right"><span class="label">Fare</span><span class="value fare-bold">₹<span id="out-fare">--</span></span></div>
+                </div>
+                <div class="row">
+                    <div class="col"><span class="label">Booking Time</span><span class="value"><span id="out-date">--</span> | <span id="out-time">--</span></span></div>
+                    <div class="col col-right"><span class="label">Tickets</span><span class="value" id="out-count">--</span></div>
+                </div>
+                <div class="row"><div class="col"><span class="label">Starting stop</span><span class="value" id="out-start">--</span></div></div>
+                <div class="row"><div class="col"><span class="label">Ending stop</span><span class="value" id="out-end">--</span></div></div>
+                <div class="txn-id">T11102025ee8d9034fe</div>
+                <div class="qr-btn" onclick="openQR()"><i class="fa-solid fa-qrcode"></i> Show QR code</div>
+                
+                <div class="footer-logo">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/58/ONDC_Official_Logo.svg" alt="ONDC NETWORK" class="ondc-img">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: QR CODE -->
+    <div id="qr-screen" class="app-screen">
+        <div class="header-nav">
+            <i class="fa-solid fa-xmark" style="font-size: 20px; cursor:pointer;" onclick="showScreen('ticket-screen')"></i>
+            <div class="warning-pill"><i class="fa-solid fa-triangle-exclamation warning-icon"></i>&nbsp;Issue with ticket?</div>
+            <div class="view-all-link" onclick="showScreen('all-tickets-screen')">View all tickets</div>
+        </div>
+        <div class="qr-center">
+            <div class="qr-box">
+                <div id="qrcode"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: SUPPORT -->
+    <div id="support-screen" class="app-screen">
+        <div class="support-header">
+            <i class="fa-solid fa-arrow-left back-icon" onclick="showScreen('ticket-screen')"></i>
+            <span class="page-title">Support</span>
+        </div>
+        <div class="support-content">
+            <div class="section-title" style="margin:20px 0 10px; font-weight:700;">Personal Details</div>
+            <input type="text" class="support-input" value="Sahil Sehrawat">
+            <input type="text" class="support-input" value="7678590220">
+            <input type="email" class="support-input" placeholder="Enter your e-mail">
+            <div class="section-title" style="margin:20px 0 10px; font-weight:700;">Issue Details</div>
+            <textarea class="support-textarea" placeholder="Description..."></textarea>
+            <div style="text-align:right; font-size:12px; color:#999; margin-bottom:20px;">0/500</div>
+            <div class="section-title" style="margin:20px 0 10px; font-weight:700;">Attach File (optional)</div>
+            <div class="attach-box"><i class="fa-solid fa-camera"></i> Add a file</div>
+            <button class="submit-btn" onclick="showScreen('ticket-screen')">Submit</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 5: ALL TICKETS -->
+    <div id="all-tickets-screen" class="app-screen">
+        <div class="support-header" style="background:white;">
+            <i class="fa-solid fa-arrow-left back-icon" onclick="showScreen('ticket-screen')"></i>
+            <span class="page-title">All Bus Tickets</span>
+        </div>
+        <div class="ticket-list">
+            <div class="list-card">
+                <div class="lc-header">
+                    <div class="lc-route-badge"><i class="fa-solid fa-bus"></i> <span id="list-route">Route 844</span></div>
+                    <div class="lc-price" id="list-price">₹22.79</div>
+                </div>
+                <div class="lc-stops">
+                    <div style="position:absolute; left:4px; top:15px; font-size:10px; color:#999;">↓</div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-green"></div><div class="lc-stop-name" id="list-start">Start</div></div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-red"></div><div class="lc-stop-name" id="list-end">End</div></div>
+                </div>
+                <button class="lc-view-btn" onclick="showScreen('ticket-screen')">View Ticket</button>
+            </div>
+            
+            <div class="list-card">
+                <div class="invalid-stamp">INVALID</div>
+                <div class="lc-header"><div class="lc-route-badge"><i class="fa-solid fa-bus"></i> Route 628STL</div><div class="lc-price">₹9.25</div></div>
+                <div class="lc-stops">
+                    <div style="position:absolute; left:4px; top:15px; font-size:10px; color:#999;">↓</div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-green"></div><div class="lc-stop-name">Rawta Crossing</div></div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-red"></div><div class="lc-stop-name">Ujwa Gaon</div></div>
+                </div>
+                <button class="lc-view-btn">View Ticket</button>
+            </div>
+
+            <div class="list-card">
+                <div class="invalid-stamp">INVALID</div>
+                <div class="lc-header"><div class="lc-route-badge"><i class="fa-solid fa-bus"></i> Route 822</div><div class="lc-price">₹9.25</div></div>
+                <div class="lc-stops">
+                    <div style="position:absolute; left:4px; top:15px; font-size:10px; color:#999;">↓</div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-green"></div><div class="lc-stop-name">Tuda Mandi</div></div>
+                    <div class="lc-stop-row"><div class="lc-stop-dot dot-red"></div><div class="lc-stop-name">Rawta Crossing</div></div>
+                </div>
+                <button class="lc-view-btn">View Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL VARIABLES
+        let ticketData = "";
+        let currentBgColor = "#4285F4";
+
+        // === SCREEN SWITCHER (Fail-Safe) ===
+        function showScreen(screenId) {
+            // 1. Hide ALL screens
+            const screens = document.querySelectorAll('.app-screen');
+            screens.forEach(s => s.style.display = 'none');
+            
+            // 2. Show TARGET
+            const target = document.getElementById(screenId);
+            if (target) {
+                target.style.display = 'flex';
+                // If showing Ticket or QR, ensure background color is correct
+                if (screenId === 'ticket-screen' || screenId === 'qr-screen') {
+                    target.style.backgroundColor = currentBgColor;
+                }
+            } else {
+                alert("Critical Error: Screen '" + screenId + "' does not exist.");
+            }
+        }
+
+        // === START APP LOGIC ===
+        function startApp() {
+            try {
+                // 1. SWITCH SCREEN FIRST (So you know it worked)
+                // We capture data momentarily
+                
+                // 2. GET DATA
+                currentBgColor = document.getElementById('in-color').value;
+                const route = document.getElementById('in-route').value;
+                const vehicle = document.getElementById('in-vehicle').value;
+                const start = document.getElementById('in-start').value;
+                const end = document.getElementById('in-end').value;
+                const fare = document.getElementById('in-fare').value;
+                const date = document.getElementById('in-date').value;
+                const time = document.getElementById('in-time').value;
+                const count = document.getElementById('in-count').value;
+
+                // 3. FILL TICKET
+                document.getElementById('out-route').innerText = route;
+                document.getElementById('out-vehicle').innerText = vehicle;
+                document.getElementById('out-start').innerText = start;
+                document.getElementById('out-end').innerText = end;
+                document.getElementById('out-fare').innerText = fare;
+                document.getElementById('out-date').innerText = date;
+                document.getElementById('out-time').innerText = time;
+                document.getElementById('out-count').innerText = count;
+
+                let topPrice = (parseFloat(fare) * 0.91).toFixed(2);
+                document.getElementById('out-top-price').innerText = topPrice;
+
+                // 4. FILL LIST
+                document.getElementById('list-route').innerText = "Route " + route;
+                document.getElementById('list-price').innerText = "₹" + topPrice;
+                document.getElementById('list-start').innerText = start;
+                document.getElementById('list-end').innerText = end;
+
+                // 5. PREPARE QR DATA
+                ticketData = `Bus: ${route} | Vehicle: ${vehicle} | Date: ${date} ${time} | From: ${start} | To: ${end} | Paid: ${fare}`;
+
+                // 6. FINALLY SHOW TICKET
+                showScreen('ticket-screen');
+
+            } catch (error) {
+                alert("Error Generating Ticket: " + error.message);
+            }
+        }
+
+        // === QR CODE LOGIC ===
+        function openQR() {
+            showScreen('qr-screen');
+            const container = document.getElementById("qrcode");
+            container.innerHTML = ""; // Clear old QR
+            
+            // Check if Library loaded
+            if (typeof QRCode === 'undefined') {
+                container.innerHTML = "<p style='text-align:center'>Error: QR Library missing.<br>Check internet connection.</p>";
+                return;
+            }
+
+            try {
+                let size = Math.min(window.innerWidth * 0.8, 350);
+                new QRCode(container, {
+                    text: ticketData,
+                    width: size,
+                    height: size,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            } catch (e) {
+                alert("QR Generation Failed: " + e.message);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
+
